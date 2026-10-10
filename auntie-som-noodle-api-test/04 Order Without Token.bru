@@ -1,0 +1,22 @@
+meta {
+  name: 04 Order Without Token
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "itemId": 1,
+    "quantity": 1
+  }
+}
+
+tests {
+  test("returns 401 without Authorization header", () => expect(res.status).to.equal(401));
+}

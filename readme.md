@@ -154,3 +154,38 @@ Your task is to create a comprehensive Bruno collection that validates the entir
 
 ---
 *Good luck. Auntie Som is counting on you!* 🍜🔥
+
+---
+
+## 🕵️ Audit Report: Bugs Found
+
+The Bruno collection lives in [`auntie-som-noodle-api-test/`](auntie-som-noodle-api-test). Run it against a **freshly started** server (the data lives in memory, so stock changes carry over between runs):
+
+```bash
+cd auntie-som-noodle-api && python app.py                            # terminal 1
+cd auntie-som-noodle-api-test && npx @usebruno/cli run --env local   # terminal 2
+```
+
+Result against Lek's code: **20/33 tests pass, 13 fail**. Every failure below is a real bug.
+
+| # | Bug | Where in `app.py` | Test that catches it | Expected vs. actual |
+|---|-----|-------------------|----------------------|---------------------|
+| 1 | **Wrong total price**: every order is 5 baht too cheap | `total_price = (price * quantity) - 5` | `07 Create Valid Order`, `08 Get Created Order` | 50 expected, got 45 |
+| 2 | **Can order more than the stock**: the code only checks `stock <= 0`, not `stock >= quantity` | `if item["stock"] <= 0` | `13 Order More Than Stock` | 400 expected, got 200 + an orderId |
+| 3 | **Stock goes negative** (follows from bug 2) | `item["stock"] -= quantity` | `14 Stock Never Negative` | Fried Rice stock ≥ 0 expected, got -4 |
+| 4 | **Quantity 0 accepted**: creates an order with a negative total (-5) | no quantity check | `10 Order Zero Quantity` | 400 expected, got 200 |
+| 5 | **Negative quantity accepted**: *adds* stock back and creates an order with a negative price | no quantity check | `11 Order Negative Quantity` | 400 expected, got 200 |
+| 6 | **Missing quantity crashes the server** (`None * int` → TypeError) | no input validation | `12 Order Missing Quantity` | 400 expected, got 500 |
+| 7 | **Non-existent order returns 200** instead of 404 | `return jsonify({"error": ...}), 200` | `15 Get Non-existent Order` | 404 expected, got 200 |
+| 8 | **Order details have no auth check**: anyone with an orderId can read it | `get_order` never calls `require_auth()` | `16 Get Order Without Token` | 401 expected, got 200 |
+
+Also noticed but not tested automatically: tokens never expire even though login says `expiresIn: 3600` (`createdAt` is stored but never checked). Testing that would need a request to wait an hour.
+
+### How the tests detect the bugs
+
+- **Auth flow:** `01 Login Success` saves `accessToken` to the environment with `bru.setEnvVar`, and every order request sends it as `Bearer {{accessToken}}`. Requests 04 and 05 check that a missing or fake token gets a 401.
+- **Environment variables:** `baseUrl`, `accessToken` and `orderId` live in `environments/local.bru`. No URL or token is hard-coded.
+- **Data integrity:** `03 Get Menu` saves each item's price and stock. `07` checks `totalPrice === price × quantity` against that saved price. `08` checks that GET returns the same order as POST did. `09` checks that stock went down by exactly the ordered quantity.
+- **Business rules, not just status codes:** the tests check prices, stock levels and that no `orderId` comes back on a rejected order, so a `200 OK` with the wrong data still fails.
+- **Edge cases:** ordering more than the stock, quantity 0, negative and missing quantity, an unknown item, and an unknown order.
+- **Order of requests:** the valid-order checks (07–09) run before the bad-quantity tests (10–13), because those tests corrupt the stock on the buggy server and would make the earlier checks unreliable.

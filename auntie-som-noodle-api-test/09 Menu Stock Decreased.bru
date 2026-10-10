@@ -1,0 +1,18 @@
+meta {
+  name: 09 Menu Stock Decreased
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+tests {
+  test("Tom Yum stock decreased by exactly 1", () => {
+    const tomYum = res.body.find(i => i.id === 1);
+    expect(tomYum.stock).to.equal(bru.getVar("tomYumStock") - 1);
+  });
+}

@@ -1,0 +1,36 @@
+meta {
+  name: 03 Get Menu
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+script:post-response {
+  // Remember initial stock so later tests can verify it changes correctly
+  const tomYum = res.body.find(i => i.id === 1);
+  const friedRice = res.body.find(i => i.id === 2);
+  bru.setVar("tomYumPrice", tomYum.price);
+  bru.setVar("tomYumStock", tomYum.stock);
+  bru.setVar("friedRiceStock", friedRice.stock);
+}
+
+tests {
+  test("returns 200", () => expect(res.status).to.equal(200));
+  test("menu has items with id, name, price, stock", () => {
+    expect(res.body).to.be.an("array").that.is.not.empty;
+    res.body.forEach(i => {
+      expect(i).to.have.all.keys("id", "name", "price", "stock");
+      expect(i.price).to.be.above(0);
+      expect(i.stock).to.be.at.least(0);
+    });
+  });
+  test("Tom Yum costs 50, Fried Rice costs 45", () => {
+    expect(res.body.find(i => i.id === 1).price).to.equal(50);
+    expect(res.body.find(i => i.id === 2).price).to.equal(45);
+  });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 13 Order More Than Stock
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "itemId": 2,
+    "quantity": 5
+  }
+}
+
+tests {
+  test("rejects quantity greater than stock with 400", () => expect(res.status).to.equal(400));
+  test("does not create an order", () => expect(res.body.orderId).to.be.undefined);
+}

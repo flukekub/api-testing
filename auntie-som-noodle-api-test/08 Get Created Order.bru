@@ -1,0 +1,23 @@
+meta {
+  name: 08 Get Created Order
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/orders/{{orderId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("returns 200", () => expect(res.status).to.equal(200));
+  test("orderId matches the created order", () => expect(res.body.orderId).to.equal(bru.getEnvVar("orderId")));
+  test("status is created", () => expect(res.body.status).to.equal("created"));
+  test("totalPrice matches what POST returned", () => expect(res.body.totalPrice).to.equal(bru.getVar("lastTotalPrice")));
+  test("totalPrice is correct (50)", () => expect(res.body.totalPrice).to.equal(50));
+}

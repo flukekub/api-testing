@@ -1,0 +1,20 @@
+meta {
+  name: 15 Get Non-existent Order
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/orders/ORD-doesnotexist
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("returns 404 for unknown order", () => expect(res.status).to.equal(404));
+  test("returns an error message", () => expect(res.body.error).to.equal("Order not found"));
+}

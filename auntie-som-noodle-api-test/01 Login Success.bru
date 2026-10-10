@@ -1,0 +1,30 @@
+meta {
+  name: 01 Login Success
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "student",
+    "password": "hungry"
+  }
+}
+
+script:post-response {
+  bru.setEnvVar("accessToken", res.body.accessToken);
+}
+
+tests {
+  test("returns 200", () => expect(res.status).to.equal(200));
+  test("returns a non-empty accessToken", () => {
+    expect(res.body.accessToken).to.be.a("string").and.not.empty;
+  });
+  test("expiresIn is 3600", () => expect(res.body.expiresIn).to.equal(3600));
+}

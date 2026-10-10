@@ -1,0 +1,21 @@
+meta {
+  name: 14 Stock Never Negative
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/menu
+  body: none
+  auth: none
+}
+
+tests {
+  test("no item has negative stock", () => {
+    res.body.forEach(i => expect(i.stock, `${i.name} stock`).to.be.at.least(0));
+  });
+  test("Fried Rice stock unchanged after rejected order", () => {
+    const friedRice = res.body.find(i => i.id === 2);
+    expect(friedRice.stock).to.equal(bru.getVar("friedRiceStock"));
+  });
+}

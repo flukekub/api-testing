@@ -1,0 +1,37 @@
+meta {
+  name: 07 Create Valid Order
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "itemId": 1,
+    "quantity": 1
+  }
+}
+
+script:post-response {
+  if (res.body.orderId) bru.setEnvVar("orderId", res.body.orderId);
+  bru.setVar("lastTotalPrice", res.body.totalPrice);
+}
+
+tests {
+  test("returns 200", () => expect(res.status).to.equal(200));
+  test("orderId has format ORD-xxxxxx", () => expect(res.body.orderId).to.match(/^ORD-[0-9a-f]{6}$/));
+  test("status is created", () => expect(res.body.status).to.equal("created"));
+  test("totalPrice = price x quantity (50 x 1 = 50)", () => {
+    const expected = bru.getVar("tomYumPrice") * 1;
+    expect(res.body.totalPrice).to.equal(expected);
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: 12 Order Missing Quantity
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "itemId": 1
+  }
+}
+
+tests {
+  test("rejects missing quantity with 400 (not a 500 crash)", () => expect(res.status).to.equal(400));
+}

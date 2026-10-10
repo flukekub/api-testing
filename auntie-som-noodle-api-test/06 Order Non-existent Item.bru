@@ -1,0 +1,26 @@
+meta {
+  name: 06 Order Non-existent Item
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "itemId": 999,
+    "quantity": 1
+  }
+}
+
+tests {
+  test("returns 404 for unknown item", () => expect(res.status).to.equal(404));
+}
